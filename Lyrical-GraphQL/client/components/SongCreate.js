@@ -20,9 +20,9 @@ class SongCreate extends Component {
     this.props
       .mutate({
         variables: {
-          title: this.state.title,
-          refetchQueries: [{ query }]
-        }
+          title: this.state.title
+        },
+        refetchQueries: [{ query }]
       })
       .then(() => {
         hashHistory.push('/');
