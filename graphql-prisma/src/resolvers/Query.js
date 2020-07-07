@@ -11,9 +11,6 @@ const Query = {
         OR: [
           {
             name_contains: query
-          },
-          {
-            email_contains: query
           }
         ]
       }
