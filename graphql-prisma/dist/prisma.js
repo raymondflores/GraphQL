@@ -1,12 +1,20 @@
-import { Prisma } from 'prisma-binding'
-import { fragmentReplacements } from './resolvers/index'
+'use strict';
 
-const prisma = new Prisma({
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = undefined;
+
+var _prismaBinding = require('prisma-binding');
+
+var _index = require('./resolvers/index');
+
+var prisma = new _prismaBinding.Prisma({
   typeDefs: 'src/generated/prisma.graphql',
   endpoint: process.env.PRISMA_ENDPOINT,
   secret: 'thisismysecret',
-  fragmentReplacements
-})
+  fragmentReplacements: _index.fragmentReplacements
+});
 
 // prisma.query.users(null, '{ id name posts { id title} }').then((data) => {
 //   console.log(JSON.stringify(data, undefined, 2))
@@ -80,4 +88,4 @@ const prisma = new Prisma({
 //   }
 // )
 
-export { prisma as default }
+exports.default = prisma;

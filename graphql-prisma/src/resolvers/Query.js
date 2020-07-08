@@ -3,8 +3,13 @@ import { PubSub } from 'graphql-yoga'
 
 const Query = {
   users(parent, args, { prisma }, info) {
-    const { query } = args
-    const opArgs = {}
+    const { query, first, skip, after, orderBy } = args
+    const opArgs = {
+      first,
+      skip,
+      after,
+      orderBy
+    }
 
     if (query) {
       opArgs.where = {
@@ -19,11 +24,15 @@ const Query = {
     return prisma.query.users(opArgs, info)
   },
   posts(parent, args, { prisma }, info) {
-    const { query } = args
+    const { query, first, skip, after, orderBy } = args
     const opArgs = {
       where: {
         published: true
-      }
+      },
+      first,
+      skip,
+      after,
+      orderBy
     }
 
     if (query) {
@@ -40,13 +49,17 @@ const Query = {
     return prisma.query.posts(opArgs, info)
   },
   myPosts(parent, args, context, info) {
-    const { query } = args
+    const { query, first, skip, after, orderBy } = args
     const { prisma, request } = context
     const userId = getUserId(request)
     const opArgs = {
       where: {
         author: { id: userId }
-      }
+      },
+      first,
+      skip,
+      after,
+      orderBy
     }
 
     if (query) {
@@ -63,7 +76,15 @@ const Query = {
     return prisma.query.posts(opArgs, info)
   },
   comments(parent, args, { prisma }, info) {
-    return prisma.query.comments(null, info)
+    const { first, skip, after, orderBy } = args
+    const opArgs = {
+      first,
+      skip,
+      after,
+      orderBy
+    }
+
+    return prisma.query.comments(opArgs, info)
   },
   me(parent, args, context, info) {
     const { prisma, request } = context
