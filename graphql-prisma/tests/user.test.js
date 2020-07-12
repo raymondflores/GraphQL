@@ -1,71 +1,25 @@
 import 'cross-fetch/polyfill'
-import ApolloBoost, { gql } from 'apollo-boost'
-import bcrypt from 'bcryptjs'
 import prisma from '../src/prisma'
+import seedDatabase, { userOne } from './utils/seedDatabase'
+import getClient from './utils/getClient'
+import { createUser, getUsers, login, getProfile } from './utils/operations'
 
-const client = new ApolloBoost({
-  uri: 'http://localhost:4000'
-})
+const client = getClient()
 
-beforeEach(async () => {
-  await prisma.mutation.deleteManyPosts()
-  await prisma.mutation.deleteManyUsers()
-  const user = await prisma.mutation.createUser({
-    data: {
-      name: 'Jen',
-      email: 'jen@example.com',
-      password: bcrypt.hashSync('test1234')
-    }
-  })
-
-  Promise.all([
-    await prisma.mutation.createPost({
-      data: {
-        title: 'My published post',
-        body: '',
-        published: true,
-        author: {
-          connect: {
-            id: user.id
-          }
-        }
-      }
-    }),
-    await prisma.mutation.createPost({
-      data: {
-        title: 'My draft post',
-        body: '',
-        published: false,
-        author: {
-          connect: {
-            id: user.id
-          }
-        }
-      }
-    })
-  ])
-})
+beforeEach(seedDatabase)
 
 test('Should create a new user', async () => {
-  const createUser = gql`
-    mutation {
-      createUser(
-        data: {
-          name: "Raymond Flores"
-          email: "ray@aol.com"
-          password: "test1234"
-        }
-      ) {
-        token
-        user {
-          id
-        }
-      }
+  const variables = {
+    data: {
+      name: 'Raymond',
+      email: 'ray@aol.com',
+      password: 'test1234'
     }
-  `
+  }
 
   const response = await client.mutate({
-    mutation: createUser
+    mutation: createUser,
+    variables
   })
 
   const exists = await prisma.exists.User({
@@ -76,71 +30,40 @@ test('Should create a new user', async () => {
 })
 
 test('Should expose public author profiles', async () => {
-  const getUsers = gql`
-    query {
-      users {
-        id
-        name
-        email
-      }
-    }
-  `
-
   const response = await client.query({
     query: getUsers
   })
 
-  expect(response.data.users.length).toBe(1)
+  expect(response.data.users.length).toBe(2)
   expect(response.data.users[0].email).toBe(null)
   expect(response.data.users[0].name).toBe('Jen')
 })
 
-test('Should expose published posts', async () => {
-  const getPosts = gql`
-    query {
-      posts {
-        id
-        title
-        body
-        published
-      }
-    }
-  `
-
-  const response = await client.query({
-    query: getPosts
-  })
-
-  expect(response.data.posts.length).toBe(1)
-  expect(response.data.posts[0].published).toBe(true)
-})
-
 test('Should not login with bad credentials', async () => {
-  const login = gql`
-    mutation {
-      login(data: { email: "jeff@example.com", password: "test1234" }) {
-        token
-      }
-    }
-  `
+  const variables = {
+    data: { email: 'jeff@example.com', password: 'test1234' }
+  }
 
-  expect(client.mutate({ mutation: login })).rejects.toThrow()
+  expect(client.mutate({ mutation: login, variables })).rejects.toThrow()
 })
 
 test('Should not signup with short password', async () => {
-  const signup = gql`
-    mutation {
-      signup(
-        data: {
-          name: "Raymond Flores"
-          email: "raymond@test.com"
-          password: "abc123"
-        }
-      ) {
-        token
-      }
+  const variables = {
+    data: {
+      name: 'Raymond Flores',
+      email: 'raymond@test.com',
+      password: 'abc123'
     }
-  `
+  }
 
-  expect(client.mutate({ mutation: signup })).rejects.toThrow()
+  expect(client.mutate({ mutation: createUser, variables })).rejects.toThrow()
+})
+
+test('Should fetch user profile', async () => {
+  const client = getClient(userOne.jwt)
+  const { data } = await client.query({ query: getProfile })
+
+  expect(data.me.id).toBe(userOne.user.id)
+  expect(data.me.name).toBe(userOne.user.name)
+  expect(data.me.email).toBe(userOne.user.email)
 })
