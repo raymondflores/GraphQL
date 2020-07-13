@@ -66,3 +66,15 @@ test('Should delete post', async () => {
 
   expect(exists).toBe(false)
 })
+
+// Should not be able to update another users post
+
+// Should not be able to delete another users post
+
+// Should require authentication to create a post (could add for update and delete too)
+
+// Should fetch published post by id
+
+// Should fetch own post by id
+
+// Should not fetch draft post from other user
